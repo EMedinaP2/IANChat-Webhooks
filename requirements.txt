@@ -1,0 +1,3 @@
+Flask
+functions_framework
+pandas
