@@ -1,13 +1,13 @@
 # Flask
 from flask import Flask, jsonify, request
-import functions_framework
+from functions import make_quotation_pdf
 import pandas as pd
 import uuid
 port = 8080
 #
 #host = "0.0.0.0"
 
-data_base = pd.read_csv('data_base.csv', index_col=False)
+
 
 app = Flask(__name__)
 
@@ -29,6 +29,10 @@ def delete_product_parameters():
 
 @app.route('/get-final-quotation', methods=['POST'])
 def get_final_quotation():
+    id_quotation = request.json['sessionInfo']['parameters']['idQuotation']
+    data_base_items = pd.read_csv('data_base_quotation_items.csv')
+    quotation_items = data_base_items[data_base_items['item_id_quote'] == id_quotation]
+    make_quotation_pdf(quotation_items)
     json_response = {
         "sessionInfo": {
             "parameters": {
@@ -46,6 +50,7 @@ def get_final_quotation():
 
 @app.route('/find-product-by-name', methods=['POST'])
 def find_product_by_name():
+    data_base = pd.read_csv('data_base.csv', index_col=False)
     productToFind = request.json['sessionInfo']['parameters']['productname']
     products = data_base['Producto'].tolist()
     if productToFind in products:
@@ -55,7 +60,7 @@ def find_product_by_name():
             "sessionInfo": {
                 "parameters": {
                     "isAvailable": True,
-                    "productPrice": price[0]
+                    "productPrice": round(price[0],2)
                 }
             }
         }
@@ -73,15 +78,21 @@ def find_product_by_name():
 
 @app.route('/get-product-total-cost', methods=['POST'])
 def get_product_total_cost():
+    id_quotation = request.json['sessionInfo']['parameters']['idQuotation']
     product_quantity = request.json['sessionInfo']['parameters']['productquantity']
-    total_cost = request.json['sessionInfo']['parameters']['productPrice']
+    product_name = request.json['sessionInfo']['parameters']['productname']
+    unit_cost = request.json['sessionInfo']['parameters']['productPrice']
+    product_total_cost = round(product_quantity * unit_cost,2)
     json_response = {
         "sessionInfo": {
             "parameters": {
-                "productTotalCost": product_quantity * total_cost
+                "productTotalCost": product_total_cost
             }
         }
     }
+    with open("data_base_quotation_items.csv","a",encoding="utf-8") as file:
+        file.write(id_quotation + "," + product_name + "," + str(int(product_quantity)) + "," + str(unit_cost) + "," + "{:.2f}".format(product_total_cost) + "\n")
+
     return json_response
 
 @app.route('/generate-id-for-quotation', methods=['POST'])
