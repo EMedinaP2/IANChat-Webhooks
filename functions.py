@@ -1,17 +1,23 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from google.api_core.exceptions import from_http_status
+from google.cloud import storage
+import os
+import uuid
 import datetime
 
 def make_quotation_pdf(items_dataframe):
-
+    uuid_file = uuid.uuid4()
     debt = 0
     for index,row in items_dataframe.iterrows():
         debt += row['item_total_price'] 
 
     today_date = datetime.date.today()
     formated_date = today_date.strftime("%d/%m/%Y")
+    formated_filename_date = today_date.strftime("%d%m%Y")
+    filename = str(uuid_file)+formated_filename_date+".pdf"
     w, h = letter
-    pdf_canvas = canvas.Canvas("quotation.pdf", pagesize=letter)
+    pdf_canvas = canvas.Canvas(filename, pagesize=letter)
     change_color(pdf_canvas, 63, 74, 37)
     pdf_canvas.rect(20, h-30, w-40, 10, fill=True)
     change_color(pdf_canvas, 220, 220, 220) 
@@ -93,6 +99,16 @@ def make_quotation_pdf(items_dataframe):
     pdf_canvas.drawString(300, sheet_h_space + 5, "Total:")
     pdf_canvas.drawString(530, sheet_h_space + 5, "${:.2f}".format(debt))
     pdf_canvas.save()
+    url = upload_blob("alpura-bucket-chat-dataset",filename, "quotation-reports/" + filename)
+    try:   
+    # Intenta eliminar el archivo
+        os.remove(filename)
+        print(f"El archivo {filename} ha sido eliminado exitosamente.")
+    except FileNotFoundError:
+        print(f"El archivo {filename} no se encontró.")
+    except Exception as e:
+        print(f"Ocurrió un error al eliminar el archivo: {e}")
+    return url
 
 def change_color(canvas, cr, cb, cg):
     r = cr/255
@@ -100,3 +116,24 @@ def change_color(canvas, cr, cb, cg):
     b = cg/255
     canvas.setFillColorRGB(r,g,b)
     return canvas
+
+def upload_blob(bucket_name, source_file_name, destination_blob_name):
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    # Optional: set a generation-match precondition to avoid potential race conditions
+    # and data corruptions. The request to upload is aborted if the object's
+    # generation number does not match your precondition. For a destination
+    # object that does not yet exist, set the if_generation_match precondition to 0.
+    # If the destination object already exists in your bucket, set instead a
+    # generation-match precondition using its generation number.
+    generation_match_precondition = 0
+
+    blob.upload_from_filename(source_file_name, if_generation_match=generation_match_precondition)
+
+    print(
+        f"File {source_file_name} uploaded to {destination_blob_name}."
+    )
+    return blob.public_url
+

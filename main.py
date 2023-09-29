@@ -32,7 +32,9 @@ def get_final_quotation():
     id_quotation = request.json['sessionInfo']['parameters']['idQuotation']
     data_base_items = pd.read_csv('data_base_quotation_items.csv')
     quotation_items = data_base_items[data_base_items['item_id_quote'] == id_quotation]
-    make_quotation_pdf(quotation_items)
+    print(quotation_items)
+    link= make_quotation_pdf(quotation_items)
+    print(link)
     json_response = {
         "sessionInfo": {
             "parameters": {
@@ -41,7 +43,8 @@ def get_final_quotation():
                 "isAvailable": None,
                 "productPrice": None,
                 "productTotalCost": None,
-                "idQuotation": None
+                "idQuotation": None,
+                "reportLink": link
             }
         }
     }
