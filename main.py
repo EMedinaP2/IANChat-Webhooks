@@ -1,7 +1,7 @@
 # Flask
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from webhooks import Webhooks_functions
-
+from waitress import serve
 
 port = 8080
 host = "0.0.0.0"
@@ -12,32 +12,40 @@ app = Flask(__name__)
 webhook_functions = Webhooks_functions()
 @app.route('/delete-product-params', methods=['POST'])
 def delete_product_parameters():
-    return webhook_functions.delete_product_parameters()
+    return jsonify(webhook_functions.delete_product_parameters())
 
 @app.route('/get-final-quotation', methods=['POST'])
 def get_final_quotation():
-    id_quotation = request.json['sessionInfo']['parameters']['idQuotation']
-    return webhook_functions.get_final_quotation(id_quotation)
+    id_quotation = request.json['sessionInfo']['parameters']['id_quotation']
+    return jsonify(webhook_functions.get_final_quotation(id_quotation))
 
 
 @app.route('/find-product-by-name', methods=['POST'])
 def find_product_by_name():
-    productToFind = request.json['sessionInfo']['parameters']['productname']
-    return webhook_functions.find_product_by_name(productToFind)
+    productToFind = request.json['sessionInfo']['parameters']['product_name']
+    return jsonify(webhook_functions.find_product_by_name(productToFind))
 
 
 @app.route('/get-product-total-cost', methods=['POST'])
 def get_product_total_cost():
-    id_quotation = request.json['sessionInfo']['parameters']['idQuotation']
-    product_quantity = request.json['sessionInfo']['parameters']['productquantity']
-    product_name = request.json['sessionInfo']['parameters']['productname']
-    unit_cost = request.json['sessionInfo']['parameters']['productPrice']
-    return webhook_functions.get_product_total_cost(id_quotation,product_quantity,unit_cost,product_name)
+    id_quotation = request.json['sessionInfo']['parameters']['id_quotation']
+    product_quantity = request.json['sessionInfo']['parameters']['product_quantity']
+    product_name = request.json['sessionInfo']['parameters']['product_name']
+    unit_cost = request.json['sessionInfo']['parameters']['product_price']
+    return jsonify(webhook_functions.get_product_total_cost(id_quotation,product_quantity,unit_cost,product_name))
 
 @app.route('/generate-id-for-quotation', methods=['POST'])
 def generate_id_for_quotation():
-    return webhook_functions.generate_id_for_quotation()
+    return jsonify(webhook_functions.generate_id_for_quotation())
+
+@app.route('/add-unit-to-product-quantity', methods=['POST'])
+def add_unit_to_product_quantity():
+    return jsonify(webhook_functions.add_unit_to_product_quantity())
+
+@app.route('/update-product-entities', methods=['POST'])
+def update_prodcut_entites():
+    return webhook_functions.update_product_entities()
 
 if __name__ == '__main__':
-    print(f"Initialized in :{port}")
-    app.run(debug=True)
+    print(f"Initialized in {host}:{port}")
+    serve(app, host=host, port=port)

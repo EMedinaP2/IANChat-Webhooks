@@ -107,6 +107,7 @@ class Pdf_manager():
             print(f"El archivo {filename} no se encontró.")
         except Exception as e:
             print(f"Ocurrió un error al eliminar el archivo: {e}")
+        print(url)
         return url
 
     def change_color(self,canvas, cr, cb, cg):
