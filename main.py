@@ -38,14 +38,16 @@ def get_product_total_cost():
 def generate_id_for_quotation():
     return jsonify(webhook_functions.generate_id_for_quotation())
 
-@app.route('/add-unit-to-product-quantity', methods=['POST'])
-def add_unit_to_product_quantity():
-    return jsonify(webhook_functions.add_unit_to_product_quantity())
-
 @app.route('/update-product-entities', methods=['POST'])
 def update_prodcut_entites():
     return webhook_functions.update_product_entities()
 
+@app.route('/get-recommendations', methods=['POST'])
+def get_recommendations():
+    product_name = request.json['sessionInfo']['parameters']['product_name']
+    return jsonify(webhook_functions.get_recommendations(product_name))
+
 if __name__ == '__main__':
     print(f"Initialized in {host}:{port}")
-    serve(app, host=host, port=port)
+    app.run(debug=True)
+    #serve(app, host=host, port=port)

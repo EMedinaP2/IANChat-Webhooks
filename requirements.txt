@@ -3,3 +3,4 @@ pandas
 reportlab
 google-cloud-storage
 google-cloud-dialogflow-cx
+waitress 

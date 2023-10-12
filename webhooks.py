@@ -2,6 +2,7 @@ from pdf_manager import Pdf_manager
 from entities_manager import sample_update_entity_type
 import pandas as pd
 import uuid
+import difflib
 
 
 class Webhooks_functions:
@@ -92,16 +93,6 @@ class Webhooks_functions:
             }
         }
         return json_response
-
-    def add_unit_to_product_quantity(self):
-        json_response = {
-            "sessionInfo": {
-                "parameters":{
-                    "product_quantity": 1
-                    }
-            }
-        }
-        return json_response
     
     def update_product_entities(self):
         products = pd.read_csv('data_base.csv')
@@ -109,3 +100,23 @@ class Webhooks_functions:
         products_entities = [{"value": i,  "synonyms": [i] } for i in products]
         sample_update_entity_type("4364c715-73ad-469f-bad1-25a7f3828c08",products_entities)
         return "Product entities updated",200
+    
+    def get_recommendations(self, target_product):
+        data_base = pd.read_csv('data_base.csv')
+        sim_results = []
+        for product in data_base['Producto']:
+            sim = get_sim(product, target_product)
+            if sim > 0.5:
+                sim_results.append(product)
+        print(sim_results)
+        json_response = {
+            "sessionInfo": {
+                "parameters":{
+                    "similar_results": sim_results
+                    }
+            }
+        }
+        return json_response
+
+def get_sim(input_name,target_name):
+    return difflib.SequenceMatcher(None, input_name.lower(), target_name.lower()).ratio()
